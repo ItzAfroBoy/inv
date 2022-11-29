@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ItzAfroBoy/inv/fetch"
+	"github.com/ItzAfroBoy/inv/helper"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	lg "github.com/charmbracelet/lipgloss"
@@ -22,10 +22,11 @@ type model struct {
 func InitialModel() model {
 	s := spinner.New()
 	s.Spinner = spinner.Jump
-	s.Style = lg.NewStyle().Foreground(lg.Color("205"))
+	s.Style = lg.NewStyle().Foreground(lg.Color("#F15152"))
 
 	sTwo := s
 	sTwo.Spinner = spinner.Line
+	sTwo.Style = s.Style.Copy().Foreground(lg.Color("#EDB183"))
 
 	m := model{spinner: s, actionSpinner: sTwo}
 	return m
@@ -46,7 +47,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-	case fetch.ResMsg:
+	case helper.ResMsg:
 		var state string
 
 		switch msg.State {

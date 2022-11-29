@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"os"
 	"time"
 
@@ -14,19 +16,39 @@ import (
 
 func main() {
 	var rows []t.Row
+	var opts helper.Options
+
+	prices := flag.Bool("prices", false, "Fetch item prices from Steam Market")
+	cache := flag.Bool("cache", false, "Used cached results")
 
 	sm := spinner.InitialModel()
 	p := tea.NewProgram(sm)
 
+	flag.Parse()
+
+	opts = helper.Options{Prices: *prices, Cache: *cache}
+
 	go func() {
-		p.Send(fetch.ResMsg{Msg: "Fetching inventory", State: "running"})
-		rows = fetch.Get(p)
-		p.Send(fetch.ResMsg{Msg: "Saving inventory", State: "running"})
+		p.Send(helper.ResMsg{Msg: "Fetching inventory", State: "running"})
+		rows = fetch.Get(p, opts)
 		time.Sleep(1 * time.Second)
-		helper.Save(rows)
-		p.Send(fetch.ResMsg{Msg: "Saving inventory", State: "complete"})
+		p.Send(helper.ResMsg{Msg: "Fetching inventory", State: "complete"})
+		p.Send(helper.ResMsg{Msg: fmt.Sprintf("%d items fetched", len(rows)), State: "complete"})
 		time.Sleep(1 * time.Second)
-		p.Send(fetch.ResMsg{Msg: "Loading inventory", State: "complete"})
+
+		if opts.Prices && !opts.Cache {
+			p.Send(helper.ResMsg{Msg: "Fetching prices", State: "running"})
+			rows = fetch.GetPrices(rows)
+			p.Send(helper.ResMsg{Msg: "Fetching prices", State: "complete"})
+			time.Sleep(1 * time.Second)
+			p.Send(helper.ResMsg{Msg: "Saving inventory", State: "running"})
+			time.Sleep(1 * time.Second)
+			helper.Save(rows)
+			p.Send(helper.ResMsg{Msg: "Saving inventory", State: "complete"})
+			time.Sleep(1 * time.Second)
+		}
+
+		p.Send(helper.ResMsg{Msg: "Loading inventory", State: "complete"})
 		time.Sleep(500 * time.Millisecond)
 		p.Quit()
 	}()
@@ -38,7 +60,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	tm := table.InitialModel(rows)
-	_, err = tea.NewProgram(tm, tea.WithAltScreen()).Run()
+	tm := table.InitialModel(rows, opts)
+	_, err = tea.NewProgram(tm, tea.WithAltScreen(), tea.WithMouseCellMotion()).Run()
 	helper.Check(err)
 }

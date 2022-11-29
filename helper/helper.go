@@ -7,6 +7,16 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 )
 
+type ResMsg struct {
+	Msg   string
+	State string
+}
+
+type Options struct {
+	Prices bool
+	Cache  bool
+}
+
 func Check(err error) {
 	if err != nil {
 		panic(err)

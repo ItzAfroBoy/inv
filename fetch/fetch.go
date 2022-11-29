@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/ItzAfroBoy/inv/helper"
@@ -12,21 +14,20 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type ResMsg struct {
-	Msg   string
-	State string
-}
-
-func Get(p *tea.Program) []table.Row {
+func Get(p *tea.Program, opts helper.Options) []table.Row {
 	var rows []table.Row
+	var res *http.Response
 
-	res, err := http.Get("https://steamcommunity.com/inventory/76561198378367745/730/2")
-	helper.Check(err)
+	if !opts.Cache {
+		var err error
+		res, err = http.Get("https://steamcommunity.com/inventory/76561198378367745/730/2")
+		helper.Check(err)
+	}
 
-	if res.StatusCode != 200 {
-		p.Send(ResMsg{Msg: "Fetching inventory", State: "failed"})
+	if opts.Cache || res.StatusCode != 200 {
+		p.Send(helper.ResMsg{Msg: "Fetching inventory", State: "failed"})
 		time.Sleep(1 * time.Second)
-		p.Send(ResMsg{Msg: "Using cached inventory", State: "running"})
+		p.Send(helper.ResMsg{Msg: "Using cached inventory", State: "running"})
 
 		for _, v := range helper.Open() {
 			item := v.([]interface{})
@@ -34,11 +35,16 @@ func Get(p *tea.Program) []table.Row {
 			id := item[1].(string)
 			name := item[2].(string)
 			collection := item[3].(string)
-			rows = append(rows, []string{ix, id, name, collection})
-			time.Sleep(100 * time.Millisecond)
+			row := []string{ix, id, name, collection}
+
+			if opts.Prices && opts.Cache {
+				row = append(row, item[4].(string))
+			}
+
+			rows = append(rows, row)
 		}
 
-		p.Send(ResMsg{Msg: "Using cached inventory", State: "complete"})
+		p.Send(helper.ResMsg{Msg: "Using cached inventory", State: "complete"})
 	} else {
 		var data map[string]interface{}
 
@@ -64,7 +70,6 @@ func Get(p *tea.Program) []table.Row {
 				name := item["market_hash_name"].(string)
 				collection := tags[2].(map[string]interface{})["localized_tag_name"].(string)
 				rows = append(rows, []string{ix, id, name, collection})
-				time.Sleep(100 * time.Millisecond)
 			} else {
 				var name string
 				var collection string
@@ -79,14 +84,55 @@ func Get(p *tea.Program) []table.Row {
 				}
 				offset += 1
 				rows = append(rows, []string{ix, id, name, collection})
-				time.Sleep(100 * time.Millisecond)
 			}
 		}
 	}
 
-	time.Sleep(1 * time.Second)
-	p.Send(ResMsg{Msg: "Fetching inventory", State: "complete"})
-	p.Send(ResMsg{Msg: fmt.Sprintf("%d items fetched", len(rows)), State: "complete"})
-	time.Sleep(1 * time.Second)
 	return rows
+}
+
+func GetPrices(slice []table.Row) []table.Row {
+	var rows []table.Row
+
+	for _, v := range slice {
+		res, err := http.Get(fmt.Sprintf("https://steamcommunity.com/market/priceoverview?appid=730&currency=1&market_hash_name=%s", url.PathEscape(v[2])))
+		helper.Check(err)
+
+		if res.StatusCode != 200 {
+			v = append(v, "$0.00")
+			rows = append(rows, v)
+		} else {
+			var data map[string]interface{}
+
+			defer res.Body.Close()
+			body, err := io.ReadAll(res.Body)
+			helper.Check(err)
+
+			err = json.Unmarshal(body, &data)
+			helper.Check(err)
+
+			if data["lowest_price"] != nil {
+				v = append(v, data["lowest_price"].(string))
+			} else {
+				v = append(v, data["median_price"].(string))
+			}
+
+			rows = append(rows, v)
+		}
+
+		time.Sleep(3 * time.Second)
+	}
+
+	return rows
+}
+
+func GetInvValue(slice []table.Row) string {
+	var value float64
+
+	for _, v := range slice {
+		x, _ := strconv.ParseFloat(v[4][1:], 64)
+		value += x
+	}
+
+	return fmt.Sprintf("$%.2f", value)
 }

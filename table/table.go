@@ -64,7 +64,6 @@ func InitialModel(rows []table.Row, opts helper.Options) model {
 			}
 			return rows[i][1] > rows[j][1]
 		})
-
 	default:
 		sort.Slice(rows, func(i, j int) bool {
 			if opts.Order == "descending" {
@@ -74,10 +73,8 @@ func InitialModel(rows []table.Row, opts helper.Options) model {
 		})
 	}
 
-	if opts.Sort != "" {
-		for i, v := range rows {
-			v[0] = fmt.Sprintf("%d", i+1)
-		}
+	for i, v := range rows {
+		v[0] = fmt.Sprintf("%d", i+1)
 	}
 
 	t := table.New(table.WithColumns(columns), table.WithRows(rows), table.WithFocused(true))

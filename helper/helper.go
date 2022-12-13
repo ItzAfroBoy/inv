@@ -38,7 +38,13 @@ func Open() []interface{} {
 }
 
 func Save(slice []table.Row) {
-	data, _ := json.MarshalIndent(slice, "", "\t")
+	var rows []table.Row
+
+	for _, v := range slice {
+		rows = append(rows, v[1:])
+	}
+
+	data, _ := json.MarshalIndent(rows, "", "\t")
 	err := os.WriteFile("inv.json", data, 0644)
 	Check(err)
 }

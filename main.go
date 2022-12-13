@@ -20,13 +20,15 @@ func main() {
 
 	prices := flag.Bool("prices", false, "Fetch item prices from Steam Market")
 	cache := flag.Bool("cache", false, "Used cached results")
+	sort := flag.String("sort", "", "Sort results")
+	order := flag.String("order", "ascending", "Ascending or descending")
 
 	sm := spinner.InitialModel()
 	p := tea.NewProgram(sm)
 
 	flag.Parse()
 
-	opts = helper.Options{Prices: *prices, Cache: *cache}
+	opts = helper.Options{Prices: *prices, Cache: *cache, Sort: *sort, Order: *order}
 
 	go func() {
 		p.Send(helper.ResMsg{Msg: "Fetching inventory", State: "running"})

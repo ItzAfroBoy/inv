@@ -1,6 +1,8 @@
 package table
 
 import (
+	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/ItzAfroBoy/inv/fetch"
@@ -31,6 +33,51 @@ func InitialModel(rows []table.Row, opts helper.Options) model {
 	if opts.Prices {
 		columns = append(columns, table.Column{Title: "Price", Width: 5})
 		value = fetch.GetInvValue(rows)
+	}
+
+	switch opts.Sort {
+	case "price":
+		sort.Slice(rows, func(i, j int) bool {
+			if opts.Order == "ascending" {
+				return rows[i][4] < rows[j][4]
+			}
+			return rows[i][4] > rows[j][4]
+		})
+	case "collection":
+		sort.Slice(rows, func(i, j int) bool {
+			if opts.Order == "ascending" {
+				return rows[i][3] < rows[j][3]
+			}
+			return rows[i][3] > rows[j][3]
+		})
+	case "item":
+		sort.Slice(rows, func(i, j int) bool {
+			if opts.Order == "ascending" {
+				return rows[i][2] < rows[j][2]
+			}
+			return rows[i][2] > rows[j][2]
+		})
+	case "id":
+		sort.Slice(rows, func(i, j int) bool {
+			if opts.Order == "ascending" {
+				return rows[i][1] < rows[j][1]
+			}
+			return rows[i][1] > rows[j][1]
+		})
+
+	default:
+		sort.Slice(rows, func(i, j int) bool {
+			if opts.Order == "descending" {
+				return rows[i][0] > rows[j][0]
+			}
+			return rows[i][0] < rows[j][0]
+		})
+	}
+
+	if opts.Sort != "" {
+		for i, v := range rows {
+			v[0] = fmt.Sprintf("%d", i+1)
+		}
 	}
 
 	t := table.New(table.WithColumns(columns), table.WithRows(rows), table.WithFocused(true))

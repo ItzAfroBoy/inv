@@ -15,6 +15,8 @@ type ResMsg struct {
 type Options struct {
 	Prices bool
 	Cache  bool
+	Sort   string
+	Order  string
 }
 
 func Check(err error) {

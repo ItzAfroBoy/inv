@@ -29,16 +29,16 @@ func Get(p *tea.Program, opts helper.Options) []table.Row {
 		time.Sleep(1 * time.Second)
 		p.Send(helper.ResMsg{Msg: "Using cached inventory", State: "running"})
 
-		for _, v := range helper.Open() {
+		for i, v := range helper.Open() {
 			item := v.([]interface{})
-			ix := item[0].(string)
-			id := item[1].(string)
-			name := item[2].(string)
-			collection := item[3].(string)
+			ix := fmt.Sprintf("%d", i+1)
+			id := item[0].(string)
+			name := item[1].(string)
+			collection := item[2].(string)
 			row := []string{ix, id, name, collection}
 
 			if opts.Prices && opts.Cache {
-				row = append(row, item[4].(string))
+				row = append(row, item[3].(string))
 			}
 
 			rows = append(rows, row)

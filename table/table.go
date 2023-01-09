@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	lg "github.com/charmbracelet/lipgloss"
+	tsize "github.com/kopoli/go-terminal-size"
 )
 
 type model struct {
@@ -101,11 +102,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.table.Focus()
 			}
+		case "r":
+			size, _ := tsize.GetSize()
+			if m.value != "" {
+				m.table.SetHeight(helper.Min(m.len, size.Height-10))
+			} else {
+				m.table.SetHeight(helper.Min(m.len, size.Height-5))
+			}
+			return m, tea.ClearScreen
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
-		m.table.SetHeight(helper.Min(m.len, msg.Height-10))
+		if m.value != "" {
+			m.table.SetHeight(helper.Min(m.len, msg.Height-10))
+		} else {
+			m.table.SetHeight(helper.Min(m.len, msg.Height-5))
+		}
 	}
 
 	m.table, cmd = m.table.Update(msg)
@@ -125,5 +138,9 @@ func (m model) View() string {
 		m.table.SetStyles(s)
 	}
 
-	return baseStyle.Render(m.table.View()) + "\n" + baseStyle.Render(lg.NewStyle().Render(" Total Value: "+m.value+" ")) + "\n"
+	res := baseStyle.Render(m.table.View()) + "\n"
+	if m.value != "" {
+		res += baseStyle.Render(lg.NewStyle().Render(" Total Value: "+m.value+" ")) + "\n"
+	}
+	return res
 }

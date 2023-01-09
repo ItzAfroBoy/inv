@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -20,7 +21,11 @@ func Get(p *tea.Program, opts helper.Options) []table.Row {
 
 	if !opts.Cache {
 		var err error
-		res, err = http.Get("https://steamcommunity.com/inventory/76561198378367745/730/2")
+
+		res, err = http.PostForm("https://steamid.io/lookup", url.Values{"input": {opts.User}})
+		helper.Check(err)
+		userID := filepath.Base(res.Request.URL.Path)
+		res, err = http.Get(fmt.Sprintf("https://steamcommunity.com/inventory/%s/730/2", userID))
 		helper.Check(err)
 	}
 
@@ -29,7 +34,7 @@ func Get(p *tea.Program, opts helper.Options) []table.Row {
 		time.Sleep(1 * time.Second)
 		p.Send(helper.ResMsg{Msg: "Using cached inventory", State: "running"})
 
-		for i, v := range helper.Open() {
+		for i, v := range helper.Open(opts.User) {
 			item := v.([]interface{})
 			ix := fmt.Sprintf("%d", i+1)
 			id := item[0].(string)

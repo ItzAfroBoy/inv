@@ -22,13 +22,14 @@ func main() {
 	cache := flag.Bool("cache", false, "Used cached results")
 	sort := flag.String("sort", "", "Sort results")
 	order := flag.String("order", "ascending", "Ascending or descending")
+	user := flag.String("user", "ItzAfroBoy", "The user's inventory to fetch")
 
 	sm := spinner.InitialModel()
 	p := tea.NewProgram(sm)
 
 	flag.Parse()
 
-	opts = helper.Options{Prices: *prices, Cache: *cache, Sort: *sort, Order: *order}
+	opts = helper.Options{Prices: *prices, Cache: *cache, Sort: *sort, Order: *order, User: *user}
 
 	go func() {
 		p.Send(helper.ResMsg{Msg: "Fetching inventory", State: "running"})
@@ -45,7 +46,7 @@ func main() {
 			time.Sleep(1 * time.Second)
 			p.Send(helper.ResMsg{Msg: "Saving inventory", State: "running"})
 			time.Sleep(1 * time.Second)
-			helper.Save(rows)
+			helper.Save(rows, opts.User)
 			p.Send(helper.ResMsg{Msg: "Saving inventory", State: "complete"})
 			time.Sleep(1 * time.Second)
 		}

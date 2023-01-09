@@ -2,6 +2,7 @@ package helper
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -17,6 +18,7 @@ type Options struct {
 	Cache  bool
 	Sort   string
 	Order  string
+	User   string
 }
 
 func Check(err error) {
@@ -25,10 +27,10 @@ func Check(err error) {
 	}
 }
 
-func Open() []interface{} {
+func Open(user string) []interface{} {
 	var dat []interface{}
 
-	data, err := os.ReadFile("inv.json")
+	data, err := os.ReadFile(fmt.Sprintf("%s.json", user))
 	Check(err)
 
 	err = json.Unmarshal(data, &dat)
@@ -37,7 +39,7 @@ func Open() []interface{} {
 	return dat
 }
 
-func Save(slice []table.Row) {
+func Save(slice []table.Row, user string) {
 	var rows []table.Row
 
 	for _, v := range slice {
@@ -45,11 +47,11 @@ func Save(slice []table.Row) {
 	}
 
 	data, _ := json.MarshalIndent(rows, "", "\t")
-	err := os.WriteFile("inv.json", data, 0644)
+	err := os.WriteFile(fmt.Sprintf("%s.json", user), data, 0o644)
 	Check(err)
 }
 
-func Longest(slice []table.Row) (int, int) {
+func Longest(slice []table.Row) (L1 int, L2 int) {
 	l1, l2 := 0, 0
 
 	for _, v := range slice {

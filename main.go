@@ -64,6 +64,6 @@ func main() {
 	}
 
 	tm := table.InitialModel(rows, opts)
-	_, err = tea.NewProgram(tm, tea.WithAltScreen(), tea.WithMouseCellMotion()).Run()
+	_, err = tea.NewProgram(tm, tea.WithAltScreen(), tea.WithMouseAllMotion()).Run()
 	helper.Check(err)
 }

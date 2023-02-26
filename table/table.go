@@ -38,12 +38,21 @@ func InitialModel(rows []table.Row, opts helper.Options) model {
 
 	switch opts.Sort {
 	case "price":
-		sort.Slice(rows, func(i, j int) bool {
-			if opts.Order == "ascending" {
-				return rows[i][4] < rows[j][4]
-			}
-			return rows[i][4] > rows[j][4]
-		})
+		if opts.Prices {
+			sort.Slice(rows, func(i, j int) bool {
+				if opts.Order == "ascending" {
+					return rows[i][4] < rows[j][4]
+				}
+				return rows[i][4] > rows[j][4]
+			})
+		} else {
+			sort.Slice(rows, func(i, j int) bool {
+				if opts.Order == "descending" {
+					return rows[i][0] > rows[j][0]
+				}
+				return rows[i][0] < rows[j][0]
+			})
+		}
 	case "collection":
 		sort.Slice(rows, func(i, j int) bool {
 			if opts.Order == "ascending" {

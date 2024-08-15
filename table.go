@@ -15,6 +15,7 @@ type model struct {
 	user      string
 	width     int
 	getPrices bool
+	importInv bool
 	sort      string
 }
 
@@ -36,7 +37,7 @@ func initialModel(length int) model {
 	s.Selected = s.Selected.Foreground(lg.Color("0")).Background(lg.Color("#D2D2D2")).Bold(false)
 
 	t.SetStyles(s)
-	return model{t, *user, len(parseIntString(length)), *getPrices, *sortTable}
+	return model{t, *user, len(parseIntString(length)), *getPrices, *load, *sortTable}
 }
 
 func (m model) Init() tea.Cmd { return nil }
@@ -73,7 +74,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.sort != "none" {
 			switch m.sort {
 			case "price":
-				if m.getPrices {
+				if m.getPrices || m.importInv {
 					sort.Slice(rows, func(i, j int) bool {
 						return parseFloat(rows[i][5][1:]) > parseFloat(rows[j][5][1:])
 					})

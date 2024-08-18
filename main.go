@@ -1,69 +1,53 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"os"
-	"time"
-
-	"github.com/ItzAfroBoy/inv/fetch"
-	"github.com/ItzAfroBoy/inv/helper"
-	"github.com/ItzAfroBoy/inv/spinner"
-	"github.com/ItzAfroBoy/inv/table"
-	t "github.com/charmbracelet/bubbles/table"
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
-	var rows []t.Row
-	var opts helper.Options
+	queue := make(chan interface{})
 
-	prices := flag.Bool("prices", false, "Fetch item prices from Steam Market")
-	cache := flag.Bool("cache", false, "Used cached results")
-	sort := flag.String("sort", "", "Sort results")
-	order := flag.String("order", "ascending", "Ascending or descending")
-	user := flag.String("user", "ItzAfroBoy", "The user's inventory to fetch")
+	if *load {
+		rows, l1, l2, l3 := importInv()
+		m := initialModel(len(rows))
+		p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseAllMotion())
 
-	sm := spinner.InitialModel()
-	p := tea.NewProgram(sm)
+		go func() {
+			p.Send(modifyLengthMsg{L1: l1, L2: l2, L3: l3})
+			p.Send(addRowMsg{rows: rows})
+		}()
 
-	flag.Parse()
-
-	opts = helper.Options{Prices: *prices, Cache: *cache, Sort: *sort, Order: *order, User: *user}
-
-	go func() {
-		p.Send(helper.ResMsg{Msg: "Fetching inventory", State: "running"})
-		rows = fetch.Get(p, opts)
-		time.Sleep(1 * time.Second)
-		p.Send(helper.ResMsg{Msg: "Fetching inventory", State: "complete"})
-		p.Send(helper.ResMsg{Msg: fmt.Sprintf("%d items fetched", len(rows)), State: "complete"})
-		time.Sleep(1 * time.Second)
-
-		if opts.Prices && !opts.Cache {
-			p.Send(helper.ResMsg{Msg: "Fetching prices", State: "running"})
-			rows = fetch.GetPrices(rows)
-			p.Send(helper.ResMsg{Msg: "Fetching prices", State: "complete"})
-			time.Sleep(1 * time.Second)
-			p.Send(helper.ResMsg{Msg: "Saving inventory", State: "running"})
-			time.Sleep(1 * time.Second)
-			helper.Save(rows, opts.User)
-			p.Send(helper.ResMsg{Msg: "Saving inventory", State: "complete"})
-			time.Sleep(1 * time.Second)
+		_, err := p.Run()
+		check(err)
+	} else {
+		if *usecsf {
+			go fetchCSFloatInv(queue)
+		} else {
+			go fetchInv(queue)
 		}
 
-		p.Send(helper.ResMsg{Msg: "Loading inventory", State: "complete"})
-		time.Sleep(500 * time.Millisecond)
-		p.Quit()
-	}()
+		msg := <-queue
+		length := msg.(int)
+		m := initialModel(length)
+		p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseAllMotion())
 
-	_, err := p.Run()
-	helper.Check(err)
+		go func() {
+			var rows []table.Row
+			l1, l2, l3 := 0, 0, 0
+			for elem := range queue {
+				l1, l2, l3 = parseLength(elem.(table.Row), l1, l2, l3)
+				rows = append(rows, elem.(table.Row))
+				p.Send(modifyLengthMsg{L1: l1, L2: l2, L3: l3})
+				p.Send(addRowMsg{rows: rows})
+			}
 
-	if len(rows) == 0 {
-		os.Exit(1)
+			if *save {
+				exportInv(rows)
+			}
+		}()
+
+		_, err := p.Run()
+		check(err)
 	}
-
-	tm := table.InitialModel(rows, opts)
-	_, err = tea.NewProgram(tm, tea.WithAltScreen(), tea.WithMouseAllMotion()).Run()
-	helper.Check(err)
 }

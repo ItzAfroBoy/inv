@@ -1,0 +1,5 @@
+user: YOUR_USERNAME_HERE
+steamid: YOUR_STEAMID_HERE
+csfloatkey: YOUR_CSFLOAT_API_KEY_HERE
+usecsfloat: false
+ntfyendpoint: NTFY_ENDPOINT_HERE

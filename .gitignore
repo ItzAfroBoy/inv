@@ -1,2 +1,8 @@
-*.exe
 *.json
+*.exe
+inv
+
+*.tape
+.DS_Store
+
+.vscode/

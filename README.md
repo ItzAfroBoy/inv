@@ -52,7 +52,6 @@ Powered by:
 - [Steam Community API](https://steamcommunity.com/inventory)
 - [Steam Market API](https://steamcommunity.com/market/priceoverview)
 - [CSFloat API](https://api.csfloat.com)
-
 - [Bubbles](https://github.com/charmbracelet/bubbles)
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea)
 - [Lipgloss](https://github.com/charmbracelet/lipgloss)

@@ -6,3 +6,4 @@ inv
 .DS_Store
 
 .vscode/
+bin/

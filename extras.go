@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/charmbracelet/bubbles/table"
+	lg "github.com/charmbracelet/lipgloss"
 	"gopkg.in/yaml.v3"
 )
 
@@ -21,10 +22,10 @@ type ITEM struct {
 }
 
 type CONFIG struct {
-	User       string
-	SteamID    string
-	CSFloatKey string
-	UseCSFloat bool
+	User         string
+	SteamID      string
+	CSFloatKey   string
+	UseCSFloat   bool
 	NtfyEndpoint string
 }
 
@@ -210,7 +211,7 @@ func importInv() ([]table.Row, int, int, int) {
 
 	for i, v := range inv {
 		ix := fmt.Sprintf("%d", i+1)
-		row := table.Row{ix, v.AssetID, v.Name, v.Collection, v.Float, v.Price}
+		row := table.Row{ix, v.AssetID, v.Name, v.Collection, v.Float, lg.PlaceHorizontal(6, lg.Right, v.Price)}
 		l1, l2, l3 = parseLength(row, l1, l2, l3)
 		rows = append(rows, row)
 	}

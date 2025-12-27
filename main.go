@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	queue := make(chan interface{})
+	queue := make(chan any)
 
 	if *load {
 		rows, l1, l2, l3 := importInv()
